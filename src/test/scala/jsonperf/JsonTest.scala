@@ -1,5 +1,7 @@
 package jsonperf
 
+import scalaz.{Failure, Success}
+
 abstract class JsonTest[A](implicit ev: scala.reflect.Manifest[A]) extends Serializable {
 
   def json: String
@@ -8,6 +10,7 @@ abstract class JsonTest[A](implicit ev: scala.reflect.Manifest[A]) extends Seria
   def sphereFromJson: io.sphere.json.FromJSON[A]
   def playRead: play.api.libs.json.Reads[A]
   def sprayRead: spray.json.JsonReader[A]
+  def argonautDecodeJson: argonaut.DecodeJson[A]
   def checkResult(result: A): Unit
 
 
@@ -62,7 +65,16 @@ abstract class JsonTest[A](implicit ev: scala.reflect.Manifest[A]) extends Seria
       import spray.json._
       JsonParser(json).convertTo[A](sprayRead)
     }
-
     override def toString(): String = "sprayJson"
+  }
+
+  val argonautJson: Parsing = new Parsing {
+    override def apply(json: String): A = {
+      argonaut.Parse.decodeValidation[A](json)(argonautDecodeJson) match {
+        case Success(a) ⇒ a
+        case Failure(t) ⇒ throw new Exception(t)
+      }
+    }
+    override def toString(): String = "argonaut"
   }
 }

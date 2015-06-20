@@ -31,6 +31,11 @@ class BigJsonTest extends JsonTest[BigJson] with Serializable {
     implicit val personFormat = jsonFormat2(Person)
     jsonFormat1(BigJson)
   }
+  override def argonautDecodeJson = {
+    import argonaut.Argonaut._
+    implicit val personDecode = jdecode2(Person)
+    jdecode1(BigJson)
+  }
   override val clazz = classOf[BigJson]
 
   override def checkResult(result: BigJson): Unit = {
